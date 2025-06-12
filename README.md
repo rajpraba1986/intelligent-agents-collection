@@ -15,31 +15,83 @@
 - **🎯 Intelligent Tool Selection**: Automatic tool selection based on user intent
 - **📊 Memory Analytics**: Detailed conversation history and statistics
 
-## 🏗️ Architecture Overview
+## 🏗️ Complete System Architecture
+
+### End-to-End Processing Flow
+
+```mermaid
+graph TD
+    UserInput[👤 User Input] --> InputProcessor[📝 Input Processor]
+    InputProcessor --> ContextManager[🧠 Context Manager]
+    ContextManager --> MemoryRetrieval[💾 Memory Retrieval]
+    ContextManager --> IntentAnalyzer[🎯 Intent Analyzer]
+    
+    IntentAnalyzer --> ReasoningEngine[🧠 Reasoning Engine]
+    ReasoningEngine --> ToolPlanner[📋 Tool Planner]
+    ToolPlanner --> ToolExecutor[⚙️ Tool Executor]
+    
+    ToolExecutor --> WeatherService[🌤️ Weather Service]
+    ToolExecutor --> LocationService[📍 Location Service]
+    ToolExecutor --> SearchService[🔍 Search Service]
+    ToolExecutor --> YouTubeService[🎥 YouTube Service]
+    
+    WeatherService --> ResultAggregator[📊 Result Aggregator]
+    LocationService --> ResultAggregator
+    SearchService --> ResultAggregator
+    YouTubeService --> ResultAggregator
+    
+    ResultAggregator --> ResponseSynthesizer[🔄 Response Synthesizer]
+    ResponseSynthesizer --> ClaudeAPI[🤖 Claude API]
+    ClaudeAPI --> ResponseFormatter[📝 Response Formatter]
+    
+    ResponseFormatter --> MemoryPersistence[💾 Memory Persistence]
+    ResponseFormatter --> UserResponse[📤 User Response]
+    
+    MemoryPersistence --> JSONStorage[📄 JSON Storage]
+```
+
+### MCP-Like Service Architecture
 
 ```mermaid
 graph TB
-    User[👤 User Input] --> Agent[🤖 Agent Core]
-    Agent --> Memory[💾 Memory Manager]
-    Agent --> Analyzer[🧠 Intent Analyzer]
+    subgraph "Agent Layer"
+        Agent[🤖 Agent Core]
+        Memory[💾 Memory Manager]
+        Reasoning[🧠 Reasoning Engine]
+    end
     
-    Analyzer --> Planning[📋 Tool Planning]
-    Planning --> Executor[⚙️ Tool Executor]
+    subgraph "Protocol Layer (MCP-Like)"
+        ToolManager[🔧 Tool Manager]
+        ServiceRegistry[📋 Service Registry]
+        MessageRouter[📨 Message Router]
+    end
     
-    Executor --> Weather[🌤️ Weather Tool]
-    Executor --> Location[📍 Location Tool]
-    Executor --> Search[🔍 DuckDuckGo Tool]
-    Executor --> YouTube[🎥 YouTube Tool]
+    subgraph "Service Layer"
+        WeatherSvc[🌤️ Weather Service]
+        LocationSvc[📍 Location Service]
+        SearchSvc[🔍 Search Service]
+        YouTubeSvc[🎥 YouTube Service]
+    end
     
-    Weather --> Response[📝 Response Synthesis]
-    Location --> Response
-    Search --> Response
-    YouTube --> Response
+    subgraph "External APIs"
+        OpenWeatherAPI[🌡️ OpenWeather API]
+        NominatimAPI[🗺️ Nominatim API]
+        DuckDuckGoAPI[🦆 DuckDuckGo API]
+        YouTubeAPI[📺 YouTube API]
+    end
     
-    Response --> Memory
-    Response --> User
+    Agent --> ToolManager
+    ToolManager --> ServiceRegistry
+    ServiceRegistry --> MessageRouter
+    MessageRouter --> WeatherSvc
+    MessageRouter --> LocationSvc
+    MessageRouter --> SearchSvc
+    MessageRouter --> YouTubeSvc
     
-    Memory -.-> FileSystem[💿 JSON Persistence]
+    WeatherSvc --> OpenWeatherAPI
+    LocationSvc --> NominatimAPI
+    SearchSvc --> DuckDuckGoAPI
+    YouTubeSvc --> YouTubeAPI
 ```
 
 ## 📋 Prerequisites
@@ -133,24 +185,43 @@ python main.py
 
 ## 🧠 How It Works
 
-### 1. Reasoning Flow
+### 1. Complete Request Processing Flow
 
 ```mermaid
 sequenceDiagram
     participant U as User
-    participant AC as Agent Core
+    participant IP as Input Processor
+    participant CM as Context Manager
     participant IA as Intent Analyzer
+    participant RE as Reasoning Engine
+    participant TP as Tool Planner
     participant TE as Tool Executor
+    participant RA as Result Aggregator
+    participant RS as Response Synthesizer
+    participant Claude as Claude API
     participant MM as Memory Manager
     
-    U->>AC: Send Message
-    AC->>IA: Analyze Intent
-    IA->>AC: Return Analysis & Plan
-    AC->>TE: Execute Tool Plan
-    TE->>AC: Return Results
-    AC->>AC: Synthesize Response
-    AC->>MM: Save Conversation
-    AC->>U: Send Response
+    U->>IP: User Message
+    IP->>CM: Process & Enhance Input
+    CM->>MM: Retrieve Context
+    MM-->>CM: Previous Conversations
+    CM->>IA: Enhanced Message + Context
+    IA->>RE: Intent Analysis
+    RE->>TP: Reasoning Strategy
+    TP->>TE: Tool Execution Plan
+    
+    Note over TE: Multi-Tool Execution
+    TE->>TE: Execute Weather Tool
+    TE->>TE: Execute Location Tool
+    TE->>TE: Execute Search Tool
+    TE->>TE: Execute YouTube Tool
+    
+    TE->>RA: Aggregate Results
+    RA->>RS: Combine Tool Outputs
+    RS->>Claude: Synthesis Request
+    Claude-->>RS: Generated Response
+    RS->>MM: Save Conversation
+    RS->>U: Final Response
 ```
 
 ### 2. Tool Selection Logic

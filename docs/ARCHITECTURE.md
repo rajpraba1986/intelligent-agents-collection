@@ -2,174 +2,318 @@
 
 ## System Overview
 
-The Conversational AI with Tools follows a modular, event-driven architecture designed for scalability and maintainability, providing seamless integration between conversational AI and external tool capabilities.
+The Conversational AI with Tools implements a sophisticated, MCP-inspired architecture that provides a clear separation between agent logic, tool management, and external service integration. While not implementing the full MCP protocol, it follows similar patterns for modularity and extensibility.
 
-## Core Components
+## Complete System Architecture
 
-### 1. Agent Core (`agent_core.py`)
-- **Responsibility**: Central orchestration and reasoning for conversational AI interactions
-- **Key Features**:
-  - Intent analysis and planning
-  - Tool execution coordination
-  - Response synthesis
-  - Memory integration
-
-### 2. Memory Manager (`memory_manager.py`)
-- **Responsibility**: Conversation persistence and retrieval for continuous dialogue
-- **Storage**: JSON-based file system
-- **Features**:
-  - Automatic conversation saving
-  - Context search and retrieval
-  - Session data management
-
-### 3. Tool System
-- **Modular Design**: Each tool is independent and can be easily extended
-- **Common Interface**: All tools extend `BaseTool` for consistency
-- **Async Support**: Non-blocking operations for better conversational flow
-
-## Data Flow
+### 1. User Input to LLM Response Flow
 
 ```mermaid
 graph TD
-    A[User Input] --> B[Intent Analysis]
-    B --> C{Tool Required?}
-    C -->|Yes| D[Tool Selection]
-    C -->|No| E[Direct Response]
-    D --> F[Tool Execution]
-    F --> G[Result Processing]
-    G --> H[Response Synthesis]
-    E --> H
-    H --> I[Memory Storage]
-    I --> J[User Response]
+    A[👤 User Input] --> B[📝 Input Processing]
+    B --> C[🧠 Context Enhancement]
+    C --> D[💾 Memory Retrieval]
+    D --> E[🎯 Intent Analysis]
+    E --> F[🧠 Reasoning Engine]
+    F --> G[📋 Tool Planning]
+    G --> H[⚙️ Tool Execution]
+    H --> I[📊 Result Aggregation]
+    I --> J[🔄 Response Synthesis]
+    J --> K[🤖 Claude API Call]
+    K --> L[📝 Response Formatting]
+    L --> M[💾 Memory Persistence]
+    L --> N[📤 User Response]
 ```
 
-## Tool Architecture
+## Layered Architecture
 
-### Tool Interface
+### 1. Presentation Layer
+- **User Interface**: Command-line interface for user interaction
+- **Input Validation**: Sanitizes and validates user inputs
+- **Response Formatting**: Structures outputs for optimal user experience
+
+### 2. Agent Logic Layer
+- **Agent Core**: Central orchestration and decision-making
+- **Memory Manager**: Conversation persistence and context management
+- **Reasoning Engine**: Multi-step analysis and planning
+
+### 3. Service Management Layer (MCP-Like)
+- **Tool Manager**: Coordinates tool selection and execution
+- **Service Registry**: Maintains available tools and their capabilities
+- **Message Router**: Routes requests to appropriate services
+
+### 4. Tool Execution Layer
+- **Tool Abstraction**: Common interface for all tools
+- **Async Execution**: Non-blocking tool operations
+- **Error Handling**: Graceful degradation on tool failures
+
+### 5. External Service Layer
+- **API Integrations**: Weather, Location, Search, YouTube services
+- **Rate Limiting**: Manages API call frequency
+- **Caching**: Optimizes repeated requests
+
+## MCP-Inspired Design Patterns
+
+### Service Discovery and Registration
 ```python
-class BaseTool:
-    name: str
-    description: str
-    args_schema: Type[BaseModel]
+class ToolManager:
+    def __init__(self):
+        self.services = {}
+        self.register_services()
     
-    def _run(self, **kwargs) -> str:
-        # Synchronous execution
+    def register_services(self):
+        """Register available tools/services"""
+        self.services = {
+            "weather": WeatherTool(),
+            "location": LocationTool(),
+            "search": DuckDuckGoTool(),
+            "youtube": YouTubeTool()
+        }
     
-    async def _arun(self, **kwargs) -> str:
-        # Asynchronous execution
+    def discover_service(self, intent: str) -> str:
+        """Discover appropriate service for user intent"""
+        # Intent-based service discovery logic
+        pass
 ```
 
-### Tool Registration
-Tools are automatically registered during agent initialization:
-
+### Message Protocol (MCP-Like)
 ```python
-self.tools = [
-    WeatherTool(),
-    LocationTool(),
-    DistanceCalculatorTool(),
-    DuckDuckGoTool(),
-    YouTubeTool()
-]
+class ServiceMessage:
+    def __init__(self, service: str, method: str, params: dict):
+        self.service = service
+        self.method = method
+        self.params = params
+        self.id = uuid.uuid4()
+    
+    def to_dict(self) -> dict:
+        return {
+            "jsonrpc": "2.0",
+            "method": f"{self.service}.{self.method}",
+            "params": self.params,
+            "id": str(self.id)
+        }
 ```
 
-## Memory Architecture
-
-### Conversation Turn Structure
+### Resource Management
 ```python
-class ConversationTurn(BaseModel):
-    timestamp: datetime
-    user_message: str
-    agent_response: str
-    tool_calls: List[Dict[str, Any]] = []
-    metadata: Dict[str, Any] = {}
+class ResourceManager:
+    def __init__(self):
+        self.resources = {
+            "weather": "Real-time weather data",
+            "locations": "Global location database",
+            "web": "Internet search capability",
+            "videos": "YouTube content access"
+        }
+    
+    def list_resources(self) -> List[dict]:
+        """List available resources (MCP-like)"""
+        return [
+            {
+                "uri": f"resource://{name}",
+                "name": name,
+                "description": desc
+            }
+            for name, desc in self.resources.items()
+        ]
 ```
 
-### Persistence Strategy
-- **Format**: JSON
-- **Location**: Project root (`conversation_memory.json`)
-- **Backup**: Automatic on every conversation
-- **Loading**: On agent initialization
+## Detailed Component Architecture
 
-## Reasoning Engine
+### Agent Core Processing Pipeline
 
-### Intent Analysis Pipeline
-1. **Input Processing**: Clean and enhance user message
-2. **Context Integration**: Add relevant conversation history
-3. **Intent Classification**: Determine user's goal
-4. **Tool Planning**: Select appropriate tools and sequence
-5. **Execution Strategy**: Plan tool execution order
+```mermaid
+graph LR
+    subgraph "Input Processing"
+        A1[Receive Input] --> A2[Sanitize]
+        A2 --> A3[Validate]
+        A3 --> A4[Enhance Context]
+    end
+    
+    subgraph "Analysis Phase"
+        B1[Intent Analysis] --> B2[Context Retrieval]
+        B2 --> B3[Reasoning Strategy]
+        B3 --> B4[Tool Planning]
+    end
+    
+    subgraph "Execution Phase"
+        C1[Tool Selection] --> C2[Parallel Execution]
+        C2 --> C3[Result Collection]
+        C3 --> C4[Error Handling]
+    end
+    
+    subgraph "Response Phase"
+        D1[Data Synthesis] --> D2[LLM Generation]
+        D2 --> D3[Response Formatting]
+        D3 --> D4[Memory Storage]
+    end
+    
+    A4 --> B1
+    B4 --> C1
+    C4 --> D1
+```
 
-### Response Synthesis
-1. **Data Aggregation**: Collect all tool results
-2. **Context Assembly**: Combine with conversation history
-3. **Response Generation**: Create coherent, helpful response
-4. **Quality Check**: Ensure response completeness
+### Memory Architecture (Persistent Context)
 
-## Error Handling
+```mermaid
+graph TB
+    subgraph "Memory Management"
+        A[Conversation Turn] --> B[JSON Serialization]
+        B --> C[File Persistence]
+        C --> D[Index Management]
+        
+        E[Context Search] --> F[Relevance Scoring]
+        F --> G[Context Retrieval]
+        G --> H[Context Integration]
+    end
+    
+    subgraph "Storage Layer"
+        I[conversation_memory.json]
+        J[Session Data]
+        K[Metadata Store]
+    end
+    
+    C --> I
+    D --> J
+    H --> K
+```
 
-### Graceful Degradation
-- Tool failures don't crash the system
-- Fallback responses for API issues
-- Memory persistence errors are logged but don't block operation
+### Tool Execution Framework
 
-### Error Recovery
+```mermaid
+graph TD
+    subgraph "Tool Interface Layer"
+        A[BaseTool Abstract Class]
+        B[Tool Registration]
+        C[Input Validation]
+        D[Output Formatting]
+    end
+    
+    subgraph "Execution Layer"
+        E[Async Executor]
+        F[Timeout Management]
+        G[Error Recovery]
+        H[Result Caching]
+    end
+    
+    subgraph "Service Layer"
+        I[Weather Service]
+        J[Location Service]
+        K[Search Service]
+        L[YouTube Service]
+    end
+    
+    A --> E
+    B --> F
+    C --> G
+    D --> H
+    
+    E --> I
+    F --> J
+    G --> K
+    H --> L
+```
+
+## Request Lifecycle
+
+### 1. Input Processing Phase
+1. **User Input Reception**: Capture raw user message
+2. **Input Sanitization**: Clean and validate input
+3. **Context Enhancement**: Add conversation history
+4. **Memory Search**: Find relevant past interactions
+
+### 2. Analysis Phase
+1. **Intent Recognition**: Determine user's goal
+2. **Complexity Assessment**: Evaluate query complexity
+3. **Tool Requirement Analysis**: Identify needed tools
+4. **Execution Strategy Planning**: Plan optimal approach
+
+### 3. Execution Phase
+1. **Tool Selection**: Choose appropriate tools
+2. **Parallel Execution**: Run tools concurrently
+3. **Result Collection**: Gather all tool outputs
+4. **Error Handling**: Manage failures gracefully
+
+### 4. Synthesis Phase
+1. **Data Aggregation**: Combine tool results
+2. **Context Assembly**: Merge with conversation history
+3. **LLM Generation**: Generate coherent response
+4. **Response Formatting**: Structure for user consumption
+
+### 5. Persistence Phase
+1. **Memory Storage**: Save conversation turn
+2. **Metadata Recording**: Store execution details
+3. **Index Updates**: Update search indices
+4. **Cache Management**: Update result caches
+
+## MCP Alignment and Future Migration
+
+### Current MCP-Like Features
+- ✅ **Service Discovery**: Tool registration and discovery
+- ✅ **Resource Management**: Tool capability exposition
+- ✅ **Async Communication**: Non-blocking operations
+- ✅ **Error Handling**: Graceful service degradation
+- ✅ **Extensibility**: Easy tool addition
+
+### Path to Full MCP Implementation
+1. **Protocol Standardization**: Implement JSON-RPC protocol
+2. **Process Isolation**: Separate tool processes
+3. **Standard Interfaces**: Adopt MCP tool definitions
+4. **Client-Server Model**: Split agent and tools
+5. **Discovery Protocol**: Implement MCP discovery
+
+### Migration Strategy
 ```python
-try:
-    result = await self.execute_tool(tool_name, params)
-except Exception as e:
-    result = f"Error executing {tool_name}: {str(e)}"
+# Current Tool Interface
+class WeatherTool(BaseTool):
+    def _run(self, location: str) -> str:
+        # Direct implementation
+        pass
+
+# Future MCP Tool Interface
+class MCPWeatherTool(MCPTool):
+    def __init__(self):
+        super().__init__(
+            name="weather",
+            server_command=["python", "weather_server.py"]
+        )
+    
+    async def call(self, method: str, params: dict) -> dict:
+        # MCP protocol communication
+        pass
 ```
-
-## Security Considerations
-
-### API Key Management
-- Environment variable storage
-- No hardcoded credentials
-- Key validation on startup
-
-### Input Validation
-- Pydantic schemas for all tool inputs
-- SQL injection prevention (though not using SQL)
-- Rate limiting considerations for external APIs
 
 ## Performance Optimizations
 
-### Async Operations
-- Non-blocking tool execution
-- Concurrent API calls when possible
-- Efficient memory operations
+### Async Processing
+- **Non-blocking I/O**: All external API calls are async
+- **Concurrent Execution**: Multiple tools run in parallel
+- **Resource Pooling**: Efficient connection management
+
+### Memory Management
+- **Lazy Loading**: Load conversation history on demand
+- **Compression**: Compress old conversation data
+- **Indexing**: Fast search through conversation history
 
 ### Caching Strategy
-- Session-level caching for repeated queries
-- Tool result caching (future enhancement)
-- Memory indexing for fast retrieval
+- **Response Caching**: Cache tool results temporarily
+- **Context Caching**: Cache frequently accessed context
+- **API Rate Limiting**: Respect external API limits
 
-## Scalability Design
+## Security Architecture
 
-### Horizontal Scaling
-- Stateless agent design
-- External memory storage capability
-- Tool isolation allows independent scaling
+### Input Validation
+- **Schema Validation**: Pydantic models for all inputs
+- **Sanitization**: Clean user inputs
+- **Rate Limiting**: Prevent abuse
 
-### Vertical Scaling
-- Memory management controls
-- Configurable tool timeouts
-- Resource usage monitoring
+### API Security
+- **Environment Variables**: Secure API key storage
+- **Request Signing**: Secure API communications
+- **Error Masking**: Don't expose sensitive error details
 
-## Extension Points
+### Data Protection
+- **Memory Encryption**: Option for encrypted storage
+- **PII Detection**: Identify and protect personal data
+- **Audit Logging**: Track all system interactions
 
-### Adding New Tools to Conversational AI
-1. Create tool class extending `BaseTool`
-2. Define input schema with Pydantic
-3. Implement `_run` and `_arun` methods
-4. Register in agent initialization
-
-### Custom Memory Backends for Conversation History
-1. Extend `MemoryManager` class
-2. Implement custom storage methods
-3. Maintain interface compatibility
-
-### Enhanced Reasoning for Better Conversations
-1. Custom intent analyzers
-2. Advanced planning algorithms
-3. Multi-step reasoning chains
+This architecture provides a solid foundation for building sophisticated conversational AI systems while maintaining the flexibility to migrate to full MCP compliance in the future.
