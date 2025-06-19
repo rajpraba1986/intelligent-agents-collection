@@ -1,793 +1,595 @@
-# Agentic AI MCP - Intelligent Multi-Tool Chatbot
+# 🤖 Conversational AI with Tools
 
-A sophisticated AI assistant with Model Context Protocol (MCP) support, featuring web search, YouTube search, weather information, and location services. Available in both command-line and web interfaces.
+[![Python 3.8+](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Anthropic Claude](https://img.shields.io/badge/AI-Anthropic%20Claude-orange.svg)](https://www.anthropic.com/)
 
-## 🚀 Features
+> A sophisticated conversational AI assistant powered by Anthropic Claude with persistent memory, advanced reasoning capabilities, and seamless multi-tool integration for weather, location services, web search, and YouTube content discovery.
 
-- **Multi-Tool Integration**: Web search, YouTube, weather, and location services
-- **Conversation Memory**: Persistent conversation history and context awareness
-- **Dual Interface**: Command-line and modern web interface
-- **Real-time Communication**: WebSocket-based chat with typing indicators
-- **Tool Usage Transparency**: See which tools are used for each response
-- **Formatted Responses**: Clean, structured output with proper formatting
+## 🌟 Features
+
+- **🧠 Advanced Reasoning Engine**: Step-by-step analysis and planning for complex queries
+- **💾 Persistent Memory**: Conversations are saved and recalled across sessions
+- **🔧 Multi-Tool Integration**: Weather, location search, web search, and YouTube integration
+- **⚡ Async Processing**: Fast, non-blocking operations for better performance
+- **🎯 Intelligent Tool Selection**: Automatic tool selection based on user intent
+- **📊 Memory Analytics**: Detailed conversation history and statistics
+
+## 🏗️ Architecture Overview
+
+```mermaid
+graph TB
+    User[👤 User Input] --> Agent[🤖 Agent Core]
+    Agent --> Memory[💾 Memory Manager]
+    Agent --> Analyzer[🧠 Intent Analyzer]
+    
+    Analyzer --> Planning[📋 Tool Planning]
+    Planning --> Executor[⚙️ Tool Executor]
+    
+    Executor --> Weather[🌤️ Weather Tool]
+    Executor --> Location[📍 Location Tool]
+    Executor --> Search[🔍 DuckDuckGo Tool]
+    Executor --> YouTube[🎥 YouTube Tool]
+    
+    Weather --> Response[📝 Response Synthesis]
+    Location --> Response
+    Search --> Response
+    YouTube --> Response
+    
+    Response --> Memory
+    Response --> User
+    
+    Memory -.-> FileSystem[💿 JSON Persistence]
+```
 
 ## 📋 Prerequisites
 
-- **Python 3.8+**
-- **Anthropic API Key** (for Claude AI)
-- **Internet Connection** (for tool functionality)
+- Python 3.8 or higher
+- Anthropic API key
+- OpenWeather API key (optional, for weather features)
+- Internet connection for web-based tools
 
-## 🛠️ Installation
+## 🚀 Quick Start
 
-### 1. Clone/Download the Project
+### 1. Clone the Repository
+
 ```bash
-# If using git
-git clone <repository-url>
-cd agentic-ai-mcp
-
-# Or download and extract the ZIP file to:
-# /Users/prabakaranrajendran/Downloads/Agentic AI MCP/agentic-ai-mcp
+git clone https://github.com/yourusername/conversational-ai-with-tools.git
+cd conversational-ai-with-tools
 ```
 
-### 2. Create Virtual Environment (Recommended)
+### 2. Set Up Virtual Environment
+
 ```bash
 python -m venv agentic-ai-env
-source agentic-ai-env/bin/activate  # On macOS/Linux
-# agentic-ai-env\Scripts\activate     # On Windows
+source agentic-ai-env/bin/activate  # On Windows: agentic-ai-env\Scripts\activate
 ```
 
 ### 3. Install Dependencies
+
 ```bash
 pip install -r requirements.txt
 ```
 
-### 4. Environment Setup
-Create a `.env` file in the project root:
+### 4. Configure Environment Variables
+
+⚠️ **Security Note**: Never commit API keys to version control!
+
+1. Copy the example environment file:
 ```bash
-touch .env
+cp .env.example .env
 ```
 
-Add your API keys to `.env`:
+2. Edit `.env` with your actual API keys:
 ```env
-# Required
-ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-# Optional (for enhanced functionality)
-OPENWEATHER_API_KEY=your_weather_api_key_here
+ANTHROPIC_API_KEY=your_actual_anthropic_api_key_here
+OPENWEATHER_API_KEY=your_actual_openweather_api_key_here
 ```
 
-## 🚀 Running the Application
+3. The `.env` file is already included in `.gitignore` to prevent accidental commits.
 
-### Web Interface (Recommended)
+### 5. Run the Application
+
 ```bash
-python src/main.py --mode web
+python main.py
 ```
 
-Then open your browser to: **http://localhost:8000**
+## 🛠️ Installation & Setup
 
-### Command Line Interface
-```bash
-python src/main.py --mode cli
-```
+### Detailed Setup Instructions
 
-### Custom Host/Port
-```bash
-python src/main.py --mode web --host 0.0.0.0 --port 8080
-```
+1. **API Keys Setup**:
+   - **Anthropic API**: Get your key from [Anthropic Console](https://console.anthropic.com/)
+   - **OpenWeather API**: Get your key from [OpenWeatherMap](https://openweathermap.org/api)
 
-## 🌐 Web Interface Testing Guide
-
-### Accessing the Interface
-1. **Start the server**:
+2. **Dependencies**:
    ```bash
-   python src/main.py --mode web
+   pip install langchain-anthropic
+   pip install pydantic
+   pip install requests
+   pip install geopy
+   pip install youtubesearchpython
+   pip install duckduckgo-search
    ```
 
-2. **Open your browser** to `http://localhost:8000`
-
-3. **Verify connection**: You should see "Connected" status in the bottom status bar
-
-### Interface Components
-
-#### Main Chat Area
-- **Header**: Shows "🤖 Agentic AI Assistant"
-- **Messages Area**: Displays conversation with user and bot messages
-- **Input Field**: Type your messages here
-- **Send Button**: Click or press Enter to send messages
-
-#### Status Bar
-- **Connection Status**: Green dot = Connected, Red dot = Disconnected
-- **Memory Button**: View conversation history summary
-- **Clear Button**: Clear conversation memory
-
-#### Visual Indicators
-- **Typing Indicator**: Shows "Assistant is typing..." when processing
-- **Tool Usage**: Displays which tools were used (e.g., "🔧 Tools used: youtube_search")
-- **Message Avatars**: 👤 for user, 🤖 for assistant
-
-## 🔧 Web Server Architecture
-
-### FastAPI Framework Integration
-
-The web server is built on **FastAPI**, a modern, high-performance web framework that provides:
-
-- **Asynchronous Support**: Non-blocking I/O for handling multiple concurrent connections
-- **WebSocket Support**: Real-time bidirectional communication
-- **Automatic API Documentation**: Built-in OpenAPI/Swagger documentation
-- **Type Safety**: Full Python type hints support
-
-### Server Components
-
-#### 1. ChatbotWebServer Class
-```python
-# Located in: src/web_server.py
-class ChatbotWebServer:
-    def __init__(self):
-        self.app = FastAPI(title="Agentic AI Chatbot", version="1.0.0")
-        self.agent = AgentCore()  # Direct integration with AI agent
-        self.active_connections = []  # WebSocket connection management
-```
-
-**Key Features:**
-- **Single Agent Instance**: One `AgentCore` instance serves all connected clients
-- **Connection Management**: Tracks active WebSocket connections
-- **Route Setup**: Configures HTTP and WebSocket endpoints
-
-#### 2. Agent Integration Layer
-
-The web server seamlessly integrates with the AI agent through:
-
-```python
-# Agent initialization in web server
-self.agent = AgentCore()
-
-# Direct method calls for processing
-result = await self.agent.process_message(user_message)
-summary = self.agent.get_memory_summary()
-self.agent.clear_memory()
-```
-
-**Integration Benefits:**
-- **Shared Memory**: All users share the same conversation context
-- **Tool Access**: Full access to all agent tools (search, weather, YouTube, location)
-- **Consistent Responses**: Same AI behavior across CLI and web interfaces
-
-### WebSocket Communication Protocol
-
-#### Message Types
-
-The web server uses a structured JSON protocol for client-server communication:
-
-```javascript
-// Client to Server Messages
-{
-    "type": "chat",           // Send user message
-    "message": "Hello AI"
-}
-
-{
-    "type": "memory",         // Request memory summary
-}
-
-{
-    "type": "clear",          // Clear conversation history
-}
-
-{
-    "type": "ping",           // Connection health check
-}
-```
-
-```javascript
-// Server to Client Responses
-{
-    "type": "response",       // AI response
-    "data": {
-        "status": "success",
-        "response": "AI response text",
-        "tool_calls": [...]
-    }
-}
-
-{
-    "type": "memory",         // Memory summary
-    "data": {
-        "total_conversations": 5,
-        "recent_topics": ["weather", "videos"],
-        "session_data_keys": ["user_preferences"]
-    }
-}
-
-{
-    "type": "connection",     // Connection status
-    "data": {
-        "status": "connected",
-        "message": "WebSocket connected successfully"
-    }
-}
-```
-
-#### Connection Lifecycle
-
-1. **Connection Establishment**
-   ```python
-   await websocket.accept()
-   self.active_connections.append(websocket)
-   
-   # Send confirmation
-   await websocket.send_text(json.dumps({
-       "type": "connection",
-       "data": {"status": "connected"}
-   }))
+3. **Project Structure**:
+   ```
+   conversational-ai-with-tools/
+   ├── src/
+   │   ├── agent/
+   │   │   ├── agent_core.py      # Main agent logic
+   │   │   └── memory_manager.py  # Memory persistence
+   │   ├── tools/
+   │   │   ├── weather_tool.py    # Weather integration
+   │   │   ├── location_tool.py   # Location services
+   │   │   ├── youtube_tool.py    # YouTube search
+   │   │   └── duckduckgo_tool.py # Web search
+   │   └── config/
+   │       └── settings.py        # Configuration
+   ├── main.py                    # Application entry point
+   ├── memory_check.py           # Memory utility
+   └── requirements.txt          # Dependencies
    ```
 
-2. **Message Processing Loop**
-   ```python
-   while True:
-       data = await websocket.receive_text()
-       message_data = json.loads(data)
-       
-       # Route to appropriate handler
-       if message_data["type"] == "chat":
-           result = await self.agent.process_message(message_data["message"])
-           await websocket.send_text(json.dumps({
-               "type": "response",
-               "data": result
-           }))
-   ```
+## 🧠 How It Works
 
-3. **Error Handling & Cleanup**
-   ```python
-   except WebSocketDisconnect:
-       self.active_connections.remove(websocket)
-       logger.info("Client disconnected")
-   ```
+### 1. Reasoning Flow
 
-### Client-Side Architecture
-
-#### JavaScript Chatbot Client
-
-The frontend uses a dedicated `ChatbotClient` class that manages:
-
-```javascript
-class ChatbotClient {
-    constructor() {
-        this.ws = null;                    // WebSocket connection
-        this.reconnectAttempts = 0;        // Auto-reconnection logic
-        this.maxReconnectAttempts = 5;     // Connection resilience
-        
-        // UI element references
-        this.chatMessages = document.getElementById('chatMessages');
-        this.chatInput = document.getElementById('chatInput');
-        this.sendButton = document.getElementById('sendButton');
-        this.typingIndicator = document.getElementById('typingIndicator');
-    }
-}
+```mermaid
+sequenceDiagram
+    participant U as User
+    participant AC as Agent Core
+    participant IA as Intent Analyzer
+    participant TE as Tool Executor
+    participant MM as Memory Manager
+    
+    U->>AC: Send Message
+    AC->>IA: Analyze Intent
+    IA->>AC: Return Analysis & Plan
+    AC->>TE: Execute Tool Plan
+    TE->>AC: Return Results
+    AC->>AC: Synthesize Response
+    AC->>MM: Save Conversation
+    AC->>U: Send Response
 ```
 
-#### Real-Time Features
+### 2. Tool Selection Logic
 
-1. **Automatic Reconnection**
-   ```javascript
-   scheduleReconnect() {
-       this.reconnectAttempts++;
-       const delay = 1000 * Math.pow(2, this.reconnectAttempts - 1);
-       
-       setTimeout(() => {
-           this.initWebSocket();
-       }, delay);
-   }
-   ```
+The agent uses intelligent keyword detection and intent analysis:
 
-2. **Typing Indicators**
-   ```javascript
-   showTyping(show) {
-       this.typingIndicator.style.display = show ? 'block' : 'none';
-       if (show) {
-           this.chatMessages.scrollTop = this.chatMessages.scrollHeight;
-       }
-   }
-   ```
+- **Weather queries**: "weather", "temperature", "forecast" → Weather Tool
+- **Video requests**: "video", "youtube", "watch" → YouTube Tool
+- **Location queries**: "location", "address", "coordinates" → Location Tool
+- **General search**: "search", "find information", "what is" → DuckDuckGo Tool
 
-3. **Response Formatting**
-   ```javascript
-   formatResponse(text) {
-       // Convert markdown-style formatting to HTML
-       formatted = formatted.replace(/🎯\s*\*\*(.*?)\*\*/g, '<h3>🎯 $1</h3>');
-       formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<h4>$1</h4>');
-       formatted = formatted.replace(/^-\s(.+)$/gm, '<li>$1</li>');
-       // ... additional formatting rules
-   }
-   ```
+### 3. Memory System
 
-### Seamless User Experience Design
-
-#### 1. Visual Feedback System
-
-- **Connection Status**: Real-time connection indicator with color coding
-- **Typing Animation**: Shows when AI is processing requests
-- **Tool Usage Display**: Transparent indication of which tools were used
-- **Message Avatars**: Clear visual distinction between user and AI messages
-
-#### 2. Error Handling & Recovery
-
-```python
-# Server-side error handling
-try:
-    result = await self.agent.process_message(message_data["message"])
-    await websocket.send_text(json.dumps({
-        "type": "response",
-        "data": result
-    }))
-except Exception as e:
-    logger.error(f"Error processing chat message: {e}")
-    await websocket.send_text(json.dumps({
-        "type": "response",
-        "data": {
-            "status": "error",
-            "response": f"I apologize, but I encountered an error: {str(e)}",
-            "tool_calls": []
-        }
-    }))
+```mermaid
+graph LR
+    Conv[Conversation] --> Turn[Conversation Turn]
+    Turn --> UserMsg[User Message]
+    Turn --> AgentResp[Agent Response]
+    Turn --> Tools[Tool Calls]
+    Turn --> Meta[Metadata]
+    
+    Turn --> JSON[JSON Storage]
+    JSON --> Load[Load on Startup]
+    Load --> History[Chat History]
 ```
 
-```javascript
-// Client-side error recovery
-this.ws.onerror = (error) => {
-    console.error('WebSocket error:', error);
-    this.updateStatus('Connection Error', false);
-    this.scheduleReconnect();  // Automatic recovery
-};
+## 💡 Usage Examples
+
+### Basic Conversations
+
+#### Weather Inquiry
+```
+👤 You: What's the weather like in Singapore?
+
+🤖 Assistant: **Weather for Singapore, SG**
+
+🌡️ **Temperature:** 28°C (feels like 32°C)
+🌤️ **Condition:** Partly Cloudy - scattered clouds
+💧 **Humidity:** 78%
+🌬️ **Wind:** 3.2 m/s
+🔽 **Pressure:** 1012 hPa
+👁️ **Visibility:** 10000 meters
+
+The weather is quite pleasant today with partly cloudy skies and comfortable temperatures around 28°C.
 ```
 
-#### 3. Responsive Design Elements
+#### Video Search with Reasoning
+```
+👤 You: Show me videos about Singapore attractions
 
-- **Adaptive Layout**: Container adjusts to different screen sizes
-- **Touch-Friendly**: Optimized for mobile interaction
-- **Keyboard Shortcuts**: Enter key for message sending
-- **Focus Management**: Automatic input field focus
+🤖 Assistant: 🧠 **Detected**: Video content request
+🔍 **Search Strategy**: Looking for 'Singapore attractions' on YouTube
+🎯 **Goal**: Find relevant video content for user's needs
+✅ **Found**: YouTube videos matching your request
 
-### Performance Optimizations
+Here are some great YouTube videos about Singapore attractions:
 
-#### 1. Asynchronous Processing
+1. **Singapore Travel Guide - Top 10 Must-Visit Places**
+   Channel: Travel with Sam
+   Duration: 12:45
+   Views: 2.3M views
+   URL: https://youtube.com/watch?v=abc123
+   Description: Complete guide covering Marina Bay Sands, Gardens by the Bay, and more iconic spots
 
-```python
-# Non-blocking message processing
-async def websocket_endpoint(websocket: WebSocket):
-    # Multiple clients can be served simultaneously
-    while True:
-        data = await websocket.receive_text()
-        # Each message processed asynchronously
-        result = await self.agent.process_message(message)
+2. **Singapore in 4K - Amazing Drone Footage**
+   Channel: 4K World
+   Duration: 8:32
+   Views: 856K views
+   URL: https://youtube.com/watch?v=def456
+   Description: Stunning aerial views of Singapore's skyline and attractions
+
+3. **Singapore Food and Attractions Walking Tour**
+   Channel: Food Adventure
+   Duration: 15:20
+   Views: 1.1M views
+   URL: https://youtube.com/watch?v=ghi789
+   Description: Experience Singapore's food scene while exploring major attractions
 ```
 
-#### 2. Connection Management
+#### Complex Weather-Based Planning
+```
+👤 You: Suggest outdoor places to visit this weekend in Singapore based on weather
 
-```python
-# Efficient connection tracking
-self.active_connections = []
+🤖 Assistant: 🧠 **Analysis**: Find outdoor places to visit based on weather conditions
+🎯 **Reasoning**: Need weather info first, then find activities suitable for those conditions, then get location details
 
-# Clean up disconnected clients
-except WebSocketDisconnect:
-    if websocket in self.active_connections:
-        self.active_connections.remove(websocket)
+🔧 **Using get_weather**: Check current weather conditions
+✅ **get_weather completed**: Found relevant information
+
+🔧 **Using duckduckgo_search**: Find weather-appropriate activities
+✅ **duckduckgo_search completed**: Found relevant information
+
+🔧 **Using location_search**: Get details about recommended locations
+✅ **location_search completed**: Found relevant information
+
+Based on the current weather conditions in Singapore (28°C, partly cloudy with 78% humidity), here are perfect outdoor places to visit this weekend:
+
+**🌳 Recommended Outdoor Activities:**
+
+1. **Gardens by the Bay**
+   📍 Coordinates: 1.281559, 103.864006
+   🌤️ Perfect for: The current mild temperature is ideal for walking through the outdoor gardens
+   💡 Tip: Visit the Skyway early morning or late afternoon to avoid the midday heat
+
+2. **East Coast Park**
+   📍 Coordinates: 1.301034, 103.928675
+   🏖️ Activities: Beach walks, cycling, BBQ spots
+   🌤️ Weather Match: Light winds (3.2 m/s) perfect for outdoor sports
+
+3. **Singapore Botanic Gardens**
+   📍 Coordinates: 1.307751, 103.815186
+   🌿 Highlights: UNESCO World Heritage site with shaded walking paths
+   💧 Humidity Tip: The 78% humidity is manageable under tree cover
+
+4. **Marina Bay Area**
+   📍 Coordinates: 1.286389, 103.858333
+   🌃 Perfect timing: Evening visits recommended when temperature drops
+   📸 Photo ops: Great lighting conditions with partly cloudy skies
+
+**Weekend Weather Forecast Considerations:**
+- Bring water and light sun protection
+- Scattered clouds provide natural shade
+- Light winds make it comfortable for outdoor activities
+- Best times: Early morning (7-9 AM) or late afternoon (5-7 PM)
 ```
 
-#### 3. Memory Efficiency
-
-- **Shared Agent Instance**: Single `AgentCore` for all connections
-- **Persistent Memory**: Conversation history maintained across sessions
-- **Tool Reuse**: Cached tool instances for faster execution
-
-### Integration with Agent Tools
-
-#### Tool Execution Flow
-
-1. **User Input Processing**
-   ```python
-   # Web server receives message
-   message_data = json.loads(data)
-   
-   # Route to agent
-   result = await self.agent.process_message(message_data["message"])
-   ```
-
-2. **Agent Tool Orchestration**
-   ```python
-   # Agent analyzes intent and selects tools
-   if any(word in user_message.lower() for word in ['video', 'youtube']):
-       youtube_result = await self.execute_tool("youtube_search", params)
-   elif any(word in user_message.lower() for word in ['weather']):
-       weather_result = await self.execute_tool("get_weather", params)
-   ```
-
-3. **Response Assembly**
-   ```python
-   # Agent formats comprehensive response
-   return {
-       "response": final_response,
-       "tool_calls": tool_calls,
-       "status": "success"
-   }
-   ```
-
-4. **Client Display**
-   ```javascript
-   // Client receives and formats response
-   handleChatResponse(result) {
-       let content = this.formatResponse(result.response);
-       
-       if (result.tool_calls && result.tool_calls.length > 0) {
-           const tools = result.tool_calls.map(call => call.tool).join(', ');
-           content += '<div class="tool-info">🔧 Tools used: ' + tools + '</div>';
-       }
-       
-       this.addMessage('bot', content);
-   }
-   ```
-
-### Security & Reliability
-
-#### 1. Input Validation
-
-```python
-# Server-side validation
-try:
-    message_data = json.loads(data)
-    if message_data["type"] == "chat":
-        # Process valid chat message
-except json.JSONDecodeError as e:
-    await websocket.send_text(json.dumps({
-        "type": "error",
-        "data": {"error": "Invalid message format"}
-    }))
+#### Multi-turn Conversation with Memory
 ```
+👤 You: What's the distance between Marina Bay Sands and Gardens by the Bay?
 
-#### 2. Connection Security
+🤖 Assistant: **Distance Calculation**
+📍 **From:** Marina Bay Sands, 10 Bayfront Avenue, Singapore
+📍 **To:** Gardens by the Bay, 18 Marina Gardens Drive, Singapore
+📏 **Distance:** 1.2 km (0.75 miles)
 
-- **Origin Validation**: WebSocket connections validated
-- **Rate Limiting**: Built-in FastAPI rate limiting support
-- **Error Isolation**: Individual connection errors don't affect others
-
-#### 3. Data Persistence
-
-```python
-# Automatic memory persistence
-self.memory_manager.add_conversation_turn(
-    user_message=user_message,
-    agent_response=final_response,
-    tool_calls=tool_calls,
-    metadata={"reasoning_approach": True}
-)
-```
-
-### Development & Testing Benefits
-
-#### 1. Live Development
-
-```bash
-# Hot reload during development
-uvicorn src.web_server:app --reload --port 8000
-```
-
-#### 2. API Documentation
-
-- **Automatic OpenAPI docs**: Available at `http://localhost:8000/docs`
-- **WebSocket testing**: Built-in testing interface
-- **Request/Response schemas**: Automatically generated
-
-#### 3. Logging & Monitoring
-
-```python
-# Comprehensive logging
-logger.info(f"Client connected. Total connections: {len(self.active_connections)}")
-logger.info(f"Processing chat message: {message_data['message']}")
-logger.info(f"Agent response: {result}")
-```
-
-This architecture ensures a seamless, responsive, and reliable chatbot experience while maintaining full integration with the sophisticated AI agent capabilities.
-
-## 💬 CLI Interface Testing Guide
-
-### Basic Commands
-```bash
-# Start CLI mode
-python src/main.py --mode cli
-
-# In the CLI:
-You: hello                    # Basic conversation
-You: memory                   # View memory summary
-You: clear                    # Clear conversation history
-You: quit                     # Exit application
-```
-
-### CLI-Specific Features
-- **Rich Formatting**: Colored output and emoji indicators
-- **Tool Usage Display**: Shows which tools were used
-- **Interactive Commands**: Special commands for memory management
-
-## 🔧 Available Tools
-
-### 1. Web Search (DuckDuckGo)
-- **Purpose**: Search the web for current information
-- **Usage**: Ask questions requiring up-to-date information
-- **Example**: "What's the latest news about AI?"
-
-### 2. YouTube Search
-- **Purpose**: Find relevant YouTube videos
-- **Usage**: Request videos on any topic
-- **Example**: "Find videos about cooking pasta"
-
-### 3. Weather Information
-- **Purpose**: Get current weather conditions
-- **Usage**: Ask about weather in any location
-- **Example**: "What's the weather in Tokyo?"
-
-### 4. Location Services
-- **Purpose**: Find location information and coordinates
-- **Usage**: Ask about places, addresses, or landmarks
-- **Example**: "Where is Central Park?"
-
-### 5. Distance Calculator
-- **Purpose**: Calculate distances between locations
-- **Usage**: Ask for distances between two places
-- **Example**: "Distance from New York to Los Angeles"
-
-## 📊 Testing Checklist
-
-### Functional Testing
-- [ ] Server starts without errors
-- [ ] Web interface loads correctly
-- [ ] WebSocket connection establishes
-- [ ] Send button responds to clicks
-- [ ] Enter key sends messages
-- [ ] All tools execute successfully
-- [ ] Memory functions work
-- [ ] Clear function works
-- [ ] Typing indicators appear
-- [ ] Tool usage is displayed
-
-### Cross-Browser Testing
-- [ ] Chrome/Edge compatibility
-- [ ] Firefox compatibility
-- [ ] Safari compatibility (macOS)
-- [ ] Mobile browser compatibility
-
-### Error Handling
-- [ ] Network disconnection recovery
-- [ ] Invalid API key handling
-- [ ] Tool execution errors
-- [ ] Malformed user input
-- [ ] Server restart recovery
-
-## 🔍 Advanced Testing
-
-### Load Testing
-```bash
-# Test multiple concurrent connections
-# Open multiple browser tabs to the same URL
-```
-
-### API Key Testing
-```bash
-# Test with invalid API key
-echo "ANTHROPIC_API_KEY=invalid_key" > .env
-python src/main.py --mode web
-# Should show appropriate error messages
-```
-
-### Network Testing
-```bash
-# Test with no internet connection
-# Disable WiFi and test tool functionality
-# Should gracefully handle connection errors
-```
-
-## 📝 Example Test Conversations
-
-### Comprehensive Test Flow
-```
-1. "Hello" → Welcome message
-2. "Find videos about machine learning" → YouTube results
-3. "What's the weather in London?" → Weather information
-4. "Tell me about quantum computing" → Web search results
-5. Click "Memory" → View conversation summary
-6. Click "Clear" → Clear conversation
-7. "Where is Big Ben?" → Location information
-```
-
-### Expected Response Format
-
-#### Basic Query Example
-```
-User Message: "Find videos about Python"
-
-Bot Response:
-🎥 Here are some great Python programming videos I found:
-
-**Recommended Videos:**
-- Python for Beginners - Complete Course
-- Advanced Python Programming Techniques
-- Python Data Science Tutorial
-
-🔧 Tools used: youtube_search
-```
-
-#### Realistic Complex Query Example
-```
-User Message: "I have 2 kids aged 2 and 8, suggest outdoor activities for weekend in Singapore based on weather"
-
-Bot Response:
-Based on the research and considering the ages of your children (2 and 8), here's a well-planned outdoor activity recommendation for your family weekend in Singapore:
-
-🎯 **Recommended Activity: Jacob Ballas Children's Garden at Singapore Botanic Gardens**
-
-Why this location is perfect for your family:
-- Safe and controlled environment suitable for both age groups
-- Mix of activities for different developmental stages
-- Shaded areas to protect from Singapore's heat
-- Educational and fun elements combined
-
-⏰ **Suggested Timeline:**
-- Best timing: Morning (8:30 AM - 11:30 AM) to avoid peak heat
-- Recommended duration: 2-3 hours
-
-🎨 **Activities by Age Group:**
-
-For your 2-year-old:
-- Sensory play area with water features
-- Safe toddler playground
-- Mini garden exhibits
-- Sand play area
-
-For your 8-year-old:
-- Treehouse exploration
-- Suspension bridge adventure
-- Interactive educational stations
-- Nature discovery trails
-
-👶 **Safety & Comfort Tips:**
-1. Bring:
-   - Sunscreen and hats
-   - Change of clothes (water play area)
-   - Snacks and water
-   - Mosquito repellent
-2. Wear comfortable walking shoes
-3. Pack wet wipes and hand sanitizer
-
-💡 **Alternative Options:**
-If weather doesn't cooperate:
-1. West Coast Park (has covered playground areas)
-2. Pasir Ris Park (multiple play zones under shade)
-
-🎫 **Practical Information:**
-- Admission: Free
-- Opening hours: 8 AM to 7 PM (closed on Mondays)
-- Address: 481 Bukit Timah Road
-
-🚗 **Getting There:**
-- By MRT: Botanic Gardens MRT (Circle Line/Downtown Line)
-- By Bus: Several bus services available (SBS 48, 66, 67, 151, 153, 154, 156, 170)
-- By Car: Parking available at Visitor Centre
-
-Source: Information compiled from honeykidsasia.com and littledayout.com
-
-❗ **Pro Tips:**
-1. Visit early morning to avoid crowds and heat
-2. Pack a light picnic to enjoy in designated areas
-3. Check weather forecast day before
-4. Plan rest breaks between activities
-
-Would you like more specific details about any of these aspects or information about alternative locations? 🤔
-
-🔧 Tools used: get_weather, duckduckgo_search, location_search
-```
-
-### Additional Test Examples
-
-#### Weather Query
-```
-User: "What's the weather like in Tokyo today?"
-
-Expected Response:
-🌤️ **Current Weather in Tokyo:**
-- Temperature: 22°C (72°F)
-- Conditions: Partly cloudy
-- Humidity: 65%
-- Wind: 8 km/h from the east
-
-Perfect weather for outdoor activities! Consider visiting parks or outdoor attractions.
-
-🔧 Tools used: get_weather
-```
-
-#### Location Query
-```
-User: "Where is the Tokyo Tower?"
-
-Expected Response:
-📍 **Tokyo Tower Location:**
-- Address: 4 Chome-2-8 Shibakoen, Minato City, Tokyo, Japan
-- Coordinates: 35.6586° N, 139.7454° E
-- Height: 333 meters (1,092 feet)
-- Nearest Station: Kamiyacho Station (5-minute walk)
-
-Built in 1958, Tokyo Tower serves as a communications tower and tourist attraction, offering panoramic views of the city.
-
-🔧 Tools used: location_search
-```
-
-## 🐛 Common Issues and Solutions
-
-### Installation Issues
-```bash
-# If pip install fails
-pip install --upgrade pip
-pip install -r requirements.txt
-
-# If Python version issues
-python --version  # Should be 3.8+
-```
-
-### Runtime Issues
-```bash
-# If ANTHROPIC_API_KEY not found
-echo "ANTHROPIC_API_KEY=your_key_here" >> .env
-
-# If port already in use
-python src/main.py --mode web --port 8001
-```
-
-## 📈 Performance Monitoring
-
-### Server Logs
-- Monitor terminal output for errors
-- Check tool execution times
-- Verify WebSocket connections
-
-### Browser Performance
-- Check Network tab in developer tools
-- Monitor WebSocket messages
-- Verify JavaScript console for errors
-
-## 🔒 Security Considerations
-
-### API Keys
-- Never commit `.env` file to version control
-- Use environment variables in production
-- Rotate API keys regularly
-
-### Network Security
-- Use HTTPS in production
-- Implement rate limiting for production use
-- Validate all user inputs
-
-## 🆘 Support and Debugging
-
-### Debug Mode
-```bash
-# Enable verbose logging
-export LOG_LEVEL=DEBUG
-python src/main.py --mode web
-```
-
-### Log Files
-- Server logs: Terminal output
-- Browser logs: Developer Console (F12)
-- Memory data: `data/conversation_memory.json`
-
-### Getting Help
-1. Check the troubleshooting section
-2. Review server logs for errors
-3. Test with minimal example inputs
-4. Verify all prerequisites are met
-
-## 📄 License
-
-This project is provided as-is for educational and development purposes.
+These two iconic attractions are very close to each other - just a pleasant 12-15 minute walk!
 
 ---
 
-**Happy Testing! 🚀**
+👤 You: How's the weather there right now?
 
-For additional support or questions, refer to the troubleshooting section or check the server logs for detailed error information.
+🤖 Assistant: Based on our previous conversation about Singapore attractions, here's the current weather for the Marina Bay area:
+
+**Weather for Singapore, SG**
+
+🌡️ **Temperature:** 28°C (feels like 32°C)
+🌤️ **Condition:** Partly Cloudy - scattered clouds
+💧 **Humidity:** 78%
+🌬️ **Wind:** 3.2 m/s
+🔽 **Pressure:** 1012 hPa
+
+Perfect weather for walking between Marina Bay Sands and Gardens by the Bay! The 1.2km walk will be comfortable with the current conditions and light breeze.
+
+---
+
+👤 You: Show me a video about this walk
+
+🤖 Assistant: I'll find you a video showing the walk between Marina Bay Sands and Gardens by the Bay!
+
+1. **Marina Bay Sands to Gardens by the Bay Walk | Singapore 4K**
+   Channel: Singapore Walks
+   Duration: 18:45
+   Views: 445K views
+   URL: https://youtube.com/watch?v=walk123
+   Description: Complete walking route with commentary, showing the Helix Bridge and waterfront promenade
+
+2. **Singapore Marina Bay Walking Tour - MBS to GBTB**
+   Channel: Travel Singapore
+   Duration: 12:30
+   Views: 287K views  
+   URL: https://youtube.com/watch?v=walk456
+   Description: Detailed walk showing all the landmarks and photo spots along the way
+
+This video perfectly matches your question about the walk we just discussed! The weather conditions in the video look similar to today's forecast.
+```
+
+### Advanced Features
+
+```python
+# Memory check
+python memory_check.py
+
+# Export conversations
+agent.export_memory("backup.json")
+
+# Search conversation history
+agent.get_conversation_by_topic("singapore", limit=5)
+```
+
+### Real-time Interaction Examples
+
+#### Location Search
+```
+👤 You: Find information about Sentosa Island
+
+🤖 Assistant: **1. Sentosa Island, Singapore**
+📍 **Coordinates:** 1.256041, 103.818671
+🏢 **Type:** Island resort destination
+🌍 **Country:** Singapore
+🏙️ **City:** Singapore
+📮 **Postal Code:** Various (Sentosa postal codes)
+
+**About Sentosa Island:**
+Sentosa Island is Singapore's premier island resort getaway, connected to mainland Singapore by causeway, cable car, and monorail. Known for its beaches, theme parks, luxury resorts, and entertainment attractions, it's a popular destination for both tourists and locals seeking recreation and relaxation.
+
+**Key Features:**
+- Universal Studios Singapore
+- S.E.A. Aquarium
+- Multiple beaches (Siloso, Palawan, Tanjong)
+- Adventure Cove Waterpark
+- Resorts World Sentosa
+```
+
+#### Search Integration
+```
+👤 You: What are the latest developments in Singapore's smart city initiatives?
+
+🤖 Assistant: Here's what I found about Singapore's latest smart city developments:
+
+1. **Singapore Launches Digital Economy Framework 2025**
+   URL: https://example.com/digital-economy-2025
+   Summary: Singapore unveils comprehensive strategy to become a leading digital economy hub, focusing on AI integration, digital infrastructure, and workforce transformation.
+
+2. **Smart Nation 2.0: Next Phase of Urban Innovation**
+   URL: https://example.com/smart-nation-2-0
+   Summary: New initiatives include IoT sensor networks, predictive urban planning, and enhanced digital government services for citizens.
+
+3. **Singapore's AI Governance Model Gains International Recognition**
+   URL: https://example.com/ai-governance-model
+   Summary: Singapore's approach to ethical AI development and regulation is being adopted by other smart cities worldwide.
+
+4. **Green Smart City: Sustainable Technology Integration**
+   URL: https://example.com/green-smart-city
+   Summary: Latest projects focus on combining environmental sustainability with smart city technology, including smart grids and IoT-enabled waste management.
+
+These developments show Singapore's continued leadership in smart city innovation, particularly in AI governance and sustainable technology integration.
+```
+
+## 🔧 Configuration
+
+### Environment Variables
+
+| Variable | Description | Required |
+|----------|-------------|----------|
+| `ANTHROPIC_API_KEY` | Anthropic Claude API key | Yes |
+| `OPENWEATHER_API_KEY` | OpenWeather API key | No |
+
+### Agent Settings
+
+Modify `src/config/settings.py` to customize:
+
+```python
+class Settings:
+    anthropic_api_key: str
+    openweather_api_key: str = None
+    max_memory_turns: int = 100
+    tool_timeout: int = 30
+```
+
+## 📊 Memory Management
+
+### Conversation Persistence
+
+The agent automatically saves all conversations to `conversation_memory.json`:
+
+```json
+{
+  "conversation_history": [
+    {
+      "user_message": "What's the weather?",
+      "agent_response": "Current weather info...",
+      "timestamp": "2024-01-10T15:30:00",
+      "tool_calls": [...],
+      "metadata": {...}
+    }
+  ],
+  "session_memory": {},
+  "last_updated": "2024-01-10T15:30:00"
+}
+```
+
+### Memory Utilities
+
+```bash
+# Check memory status
+python memory_check.py
+
+# View memory statistics
+python -c "from src.agent.memory_manager import MemoryManager; print(MemoryManager().get_memory_stats())"
+```
+
+## 🔍 Available Tools
+
+### 1. Weather Tool
+- **Purpose**: Get current weather conditions
+- **Usage**: Triggered by weather-related keywords
+- **API**: OpenWeatherMap
+- **Example**: "What's the weather in Tokyo?"
+
+### 2. Location Tool
+- **Purpose**: Search for location information and coordinates
+- **Usage**: Address and location queries
+- **API**: Nominatim (OpenStreetMap)
+- **Example**: "Find the coordinates of Eiffel Tower"
+
+### 3. YouTube Tool
+- **Purpose**: Search for YouTube videos
+- **Usage**: Video content requests
+- **API**: YouTube Search Python
+- **Example**: "Show me cooking videos"
+
+### 4. DuckDuckGo Tool
+- **Purpose**: Web search for current information
+- **Usage**: General information queries
+- **API**: DuckDuckGo Search API
+- **Example**: "Search for latest tech news"
+
+## 🚀 Advanced Usage
+
+### Custom Tool Integration
+
+Add new tools by extending the `BaseTool` class:
+
+```python
+class CustomTool(BaseTool):
+    name: str = "custom_tool"
+    description: str = "Custom tool description"
+    args_schema: Type[BaseModel] = CustomInput
+    
+    def _run(self, **kwargs) -> str:
+        # Tool implementation
+        return "Tool result"
+```
+
+### Memory Customization
+
+Extend the memory manager for custom storage:
+
+```python
+class DatabaseMemoryManager(MemoryManager):
+    def save_to_database(self):
+        # Custom database implementation
+        pass
+```
+
+## 🔧 Troubleshooting
+
+### Common Issues
+
+1. **API Key Errors**:
+   ```bash
+   ValueError: ANTHROPIC_API_KEY not found
+   ```
+   **Solution**: Ensure your `.env` file contains valid API keys
+
+2. **Tool Execution Errors**:
+   ```bash
+   Error executing tool_name: Connection timeout
+   ```
+   **Solution**: Check internet connection and API rate limits
+
+3. **Memory Loading Issues**:
+   ```bash
+   Error loading memory from file
+   ```
+   **Solution**: Delete `conversation_memory.json` to reset memory
+
+### Debug Mode
+
+Enable detailed logging:
+
+```python
+import logging
+logging.basicConfig(level=logging.INFO)
+```
+
+## 📈 Performance Optimization
+
+### Tips for Better Performance
+
+1. **Limit Memory Size**: Configure `max_memory_turns` in settings
+2. **Tool Timeouts**: Set appropriate timeouts for external APIs
+3. **Async Operations**: Use async/await for I/O operations
+4. **Memory Cleanup**: Periodically clean old conversations
+
+## 🔒 Security Best Practices
+
+1. **Never commit sensitive information**:
+   - API keys are stored in `.env` (ignored by git)
+   - Use environment variables for production deployment
+   - Regularly rotate API keys
+
+2. **Conversation Privacy**:
+   - `conversation_memory.json` contains chat history
+   - Consider adding it to `.gitignore` for privacy
+   - Use encryption for sensitive conversations
+
+## 🤝 Contributing
+
+We welcome contributions! Please follow these steps:
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/new-feature`
+3. Commit changes: `git commit -am 'Add new feature'`
+4. Push to branch: `git push origin feature/new-feature`
+5. Submit a Pull Request
+
+### Development Setup
+
+```bash
+# Install development dependencies
+pip install -r requirements-dev.txt
+
+# Run tests
+python -m pytest tests/
+
+# Code formatting
+black src/
+```
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Anthropic](https://www.anthropic.com/) for Claude AI
+- [LangChain](https://langchain.com/) for the agent framework
+- [OpenWeatherMap](https://openweathermap.org/) for weather data
+- [Nominatim](https://nominatim.org/) for location services
+
+## 📞 Support
+
+For support and questions:
+
+- Create an issue on GitHub: [conversational-ai-with-tools/issues](https://github.com/yourusername/conversational-ai-with-tools/issues)
+- Check the [FAQ](docs/FAQ.md)
+- Review [examples](examples/) for usage patterns
+
+---
+
+**Made with ❤️ for the conversational AI community**
