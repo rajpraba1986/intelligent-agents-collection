@@ -40,7 +40,7 @@ class MemoryManager:
         self.save_to_file()
         
     def get_recent_history(self, num_turns: int = 5) -> List[ConversationTurn]:
-        """Get recent conversation history"""
+        """Get the most recent conversation turns"""
         return self.conversation_history[-num_turns:] if self.conversation_history else []
         
     def get_context_for_llm(self, num_turns: int = 5) -> str:
@@ -73,17 +73,101 @@ class MemoryManager:
         """Retrieve data from session memory"""
         return self.session_memory.get(key, default)
         
-    def search_history(self, query: str, max_results: int = 3) -> List[ConversationTurn]:
+    def search_history(self, query: str, max_results: int = 5) -> List[ConversationTurn]:
         """Search conversation history for relevant context"""
+        if not self.conversation_history:
+            return []
+        
         query_lower = query.lower()
-        relevant_turns = []
+        scored_conversations = []
+        
+        # Enhanced search with multiple criteria
+        search_terms = [
+            'previous', 'earlier', 'before', 'last time', 'you mentioned', 'you said',
+            'from our conversation', 'we talked about', 'you recommended', 'the recommendation',
+            'that video', 'those videos', 'the links', 'what you found', 'the suggestion'
+        ]
+        
+        # If user is explicitly referring to previous conversation, prioritize recent history
+        is_referring_previous = any(term in query_lower for term in search_terms)
         
         for turn in self.conversation_history:
-            if (query_lower in turn.user_message.lower() or 
-                query_lower in turn.agent_response.lower()):
-                relevant_turns.append(turn)
+            score = 0
+            
+            # If user is referring to previous conversation, heavily weight recent conversations
+            if is_referring_previous:
+                # Give higher score to more recent conversations
+                recency_score = (len(self.conversation_history) - self.conversation_history.index(turn)) / len(self.conversation_history)
+                score += recency_score * 5
                 
-        return relevant_turns[-max_results:] if relevant_turns else []
+                # Boost score for conversations with tool usage
+                if turn.tool_calls:
+                    score += 3
+                
+                # Boost score for longer responses (likely more detailed)
+                if len(turn.agent_response) > 200:
+                    score += 2
+            
+            # Keyword matching in user message
+            user_words = set(turn.user_message.lower().split())
+            query_words = set(query_lower.split())
+            common_words = user_words.intersection(query_words)
+            
+            # Remove common stop words for better matching
+            stop_words = {'the', 'a', 'an', 'and', 'or', 'but', 'in', 'on', 'at', 'to', 'for', 'of', 'with', 'by', 'can', 'you', 'me', 'i'}
+            meaningful_common = common_words - stop_words
+            
+            if meaningful_common:
+                score += len(meaningful_common) * 2
+            
+            # Keyword matching in agent response
+            response_words = set(turn.agent_response.lower().split())
+            common_response_words = response_words.intersection(query_words) - stop_words
+            
+            if common_response_words:
+                score += len(common_response_words)
+            
+            # Boost for specific tool usage that might be relevant
+            if turn.tool_calls:
+                for tool_call in turn.tool_calls:
+                    tool_name = tool_call.get('tool', '')
+                    if 'youtube' in tool_name and any(word in query_lower for word in ['video', 'youtube', 'watch']):
+                        score += 4
+                    elif 'weather' in tool_name and any(word in query_lower for word in ['weather', 'temperature']):
+                        score += 4
+                    elif 'search' in tool_name and any(word in query_lower for word in ['search', 'find', 'information']):
+                        score += 4
+            
+            # Boost for conversations with similar structure or emojis
+            if any(emoji in turn.agent_response for emoji in ['🎯', '⏰', '🎨', '👶', '💡', '🎫', '🚗', '❗']):
+                score += 1
+            
+            if score > 0:
+                scored_conversations.append((score, turn))
+        
+        # Sort by score (descending) and return top results
+        scored_conversations.sort(key=lambda x: x[0], reverse=True)
+        
+        # Return the conversation turns, not the scores
+        return [turn for score, turn in scored_conversations[:max_results]]
+
+    def get_conversation_context(self, current_message: str, context_window: int = 3) -> str:
+        """Get formatted conversation context for the current message"""
+        recent_turns = self.get_recent_history(context_window)
+        
+        if not recent_turns:
+            return ""
+        
+        context_parts = ["Recent conversation:"]
+        for i, turn in enumerate(recent_turns, 1):
+            context_parts.append(f"{i}. User: {turn.user_message}")
+            context_parts.append(f"   Assistant: {turn.agent_response[:200]}...")
+            if turn.tool_calls:
+                tools = [call.get('tool', 'unknown') for call in turn.tool_calls]
+                context_parts.append(f"   Tools used: {', '.join(tools)}")
+            context_parts.append("")
+        
+        return "\n".join(context_parts)
         
     def clear_history(self):
         """Clear conversation history"""

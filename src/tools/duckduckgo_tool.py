@@ -2,6 +2,7 @@ from langchain.tools import BaseTool
 from duckduckgo_search import DDGS
 from typing import Type
 from pydantic import BaseModel, Field
+from config.settings import settings
 
 class DuckDuckGoSearchInput(BaseModel):
     query: str = Field(description="Search query for DuckDuckGo")

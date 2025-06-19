@@ -1,9 +1,11 @@
 import asyncio
 import logging
+import argparse
 from typing import Dict, Any
-from src.agent.agent_core import AgentCore  # Update the import path
+from agent.agent_core import AgentCore  # Fixed import path
 from mcp import MCPClient
 from config.settings import settings
+from web_server import ChatbotWebServer
 
 # Setup logging
 logging.basicConfig(
@@ -135,17 +137,45 @@ class AgenticAIMCP:
         if self.mcp_client:
             await self.mcp_client.disconnect()
         logger.info("Application stopped")
+    
+    async def start_web_server(self, host: str = "localhost", port: int = 8000):
+        """Start the web-based chatbot interface"""
+        web_server = ChatbotWebServer()
+        await web_server.start_server(host, port)
 
 async def main():
     """Main entry point"""
-    app = AgenticAIMCP()
+    parser = argparse.ArgumentParser(description="Agentic AI MCP Application")
+    parser.add_argument("--mode", choices=["cli", "web"], default="cli", 
+                       help="Run mode: cli for terminal interface, web for web interface")
+    parser.add_argument("--host", default="localhost", 
+                       help="Host for web server (default: localhost)")
+    parser.add_argument("--port", type=int, default=8000, 
+                       help="Port for web server (default: 8000)")
     
-    try:
-        await app.start()
-    except KeyboardInterrupt:
-        print("\nShutting down...")
-    finally:
-        await app.stop()
+    args = parser.parse_args()
+    
+    if args.mode == "web":
+        # Start web server
+        web_server = ChatbotWebServer()
+        print(f"\n🌐 Starting web interface at http://{args.host}:{args.port}")
+        print("Open this URL in your browser to use the chatbot!")
+        print("Press Ctrl+C to stop the server\n")
+        
+        try:
+            await web_server.start_server(args.host, args.port)
+        except KeyboardInterrupt:
+            print("\nShutting down web server...")
+    else:
+        # Start CLI mode
+        app = AgenticAIMCP()
+        
+        try:
+            await app.start()
+        except KeyboardInterrupt:
+            print("\nShutting down...")
+        finally:
+            await app.stop()
 
 if __name__ == "__main__":
     asyncio.run(main())

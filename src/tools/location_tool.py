@@ -4,6 +4,7 @@ from geopy.distance import geodesic
 import requests
 from typing import Type
 from pydantic import BaseModel, Field, PrivateAttr
+from config.settings import settings
 
 class LocationInput(BaseModel):
     query: str = Field(description="Location query to search for (address, city, landmark, etc.)")
